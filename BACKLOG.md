@@ -8,12 +8,17 @@ Fonte: `docs/PLANO.md` (seção 6, ordem do MVP), com o ajuste aprovado pelo usu
 
 ## Pendentes
 
-- [ ] **1. Quadro infinito** ← build 1 (`teste-1`)
+- [ ] **1. Quadro infinito** — pronta na `teste-1` (PR #1, aguardando merge do usuário)
   - Quadro com pan e zoom (React Flow, `@xyflow/react`).
   - Nenhum terminal nesta build: só o quadro vazio navegável.
 
-- [ ] **2. Terminais no quadro**
+- [ ] **2. Terminais no quadro** ← build 2 (`teste-2`)
   - Criar, arrastar e fechar terminais.
+  - Ligar o sandbox do Electron (`sandbox: true` em `src/main/index.ts`) com teste próprio que confirme que o renderer continua funcionando.
+  - Mover o `ipcMain.handle` do `pty.spawn` para fora do `createWindow`, para registrar os handlers uma única vez.
+  - Ressalva do zoom pela roda: o passo 4 do roteiro não para em exatamente 1; passa de 1 para 2. Corrigir e cobrir com teste.
+  - Fit view só é conclusivo com nós: testar nesta build.
+  - Ressalvas da build 1 que sobram: arrays `nodes={[]}` e `edges={[]}` fora do componente (`Board.tsx`); remover `Terminal.tsx` sem uso e dependências `@xterm/*` que ficarem sem uso.
   - Nó `TerminalNode` com terminal real (xterm.js + node-pty já ligados por IPC).
   - WebGL só no terminal focado; os demais usam o renderizador DOM.
   - Zoom sem `fit()` a cada passo: ajustar o terminal só quando o zoom parar.
