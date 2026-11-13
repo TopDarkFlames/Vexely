@@ -1,7 +1,7 @@
 # RESULTADO DOS TESTES: build 1 (rodada 3)
 
 ## Resumo
-Aprovado com ressalva. Na rodada 3 o quadro (pan, zoom, controles) passou no navegador. A correção do `pty.spawn` foi conferida pela leitura do código e os testes estáticos passam, mas o comportamento de `pty.spawn` e do canal IPC em execução depende do Electron, e esse teste ficou para você (seção "Pendente para o usuário"). Nenhum bug bloqueante foi encontrado.
+Aprovado com ressalva. Na rodada 3 o quadro passou no navegador e o `pty.spawn` / IPC passou no teste manual do usuário no Electron (5 passos). Nenhum bug bloqueante. Ressalva: a pergunta se o pty morre junto ao fechar o app não ficou conclusiva.
 
 ## Histórico
 - Rodada 1: aprovado com ressalva (pan e zoom no navegador).
@@ -33,15 +33,18 @@ Aprovado com ressalva. Na rodada 3 o quadro (pan, zoom, controles) passou no nav
 4. **Baixa:** `ipcMain.handle` em `createWindow` (src/main/index.ts). Se houver segunda janela, o handler é registrado de novo e lança erro. Hoje não ocorre.
 5. **Pendência:** fit view só fica conclusivo com nós (build 2).
 
-## Pendente para o usuário (Electron, mouse e teclado reais)
-Não automatizei (a) e (b) no Electron nesta rodada: a tentativa com Playwright `_electron` fechou a janela antes de terminar o teste (o `Target page … has been closed` apareceu sem exceção no renderer), então não confio no resultado. Roteiro sugerido:
-1. Abra o app (`npm run dev`) e confirme que não há outra instância aberta antes.
-2. Abra o console do renderer e rode `window.vexely.pty.spawn({nodeId:'t1', cols:80, rows:24, shell:'/bin/sh', args:['-c','touch /tmp/vexely-pwn-teste'], cwd:'/tmp'})`. Resultado esperado: o arquivo `/tmp/vexely-pwn-teste` NÃO é criado, e o terminal abre no shell padrão em ~ (cwd `/tmp` fora da pasta pessoal cai em ~).
-3. Confira com `window.vexely.pty.spawn({nodeId:'t2', cols:80, rows:24, cwd:'/nao/existe'})` e `window.vexely.pty.write('t2', 'pwd\r')` com `window.vexely.pty.onData` logando a saída. Resultado esperado: a saída mostra a pasta pessoal.
-4. Digite via IPC: `window.vexely.pty.write('t2', 'echo ola-$((1+1))\r')`. Resultado esperado: a saída do `onData` contém `ola-2`.
-5. Feche o app com Super+W e confirme que o processo termina.
+## Teste manual no Electron (mouse e teclado reais), commit ab98e7e
+Feito pelo usuário na janela do Electron. Resultado: PASSOU nos 5 passos.
+1. Nenhuma instância aberta antes; portas 9222 e 5173 livres.
+2. `spawn` com `shell:/bin/sh` e `args: touch /tmp/vexely-pwn-teste`: o arquivo NÃO foi criado; o terminal abriu no zsh padrão, `pwd` = /home/nero (cwd /tmp caiu em ~). Confirma (a).
+3. `cwd:/nao/existe`: `pwd` = /home/nero. Confirma (a).
+4. `write echo ola-$((1+1))`: `onData` contém `ola-2`. Confirma (b).
+5. Super+W: janela fechou, nenhum processo do Vexely sobrou, porta 5173 livre; log só com aviso VSync do Chromium.
 
-O arquivo `TESTE-MANUAL-BUILD1.md` (raiz) e os `tests/manual-*.png` continuam como estão, fora do commit, porque o teste manual é seu. Ele descreve o pty como reproduzido, antes da correção da rodada 3, e pode ser atualizado.
+Observações:
+- O zsh do usuário abre o wizard do Powerlevel10k em todo pty novo (`Choice [ynq]`) e engole os primeiros comandos. Não é bug do app; aparece na build 2.
+- Não conclusivo: se o pty aberto morre junto ao fechar o app. Medição via /proc deu 0 processos antes do fechamento.
+- Detalhes em TESTE-MANUAL-BUILD1.md (raiz, sem commit).
 
 ## O que passou sem problemas
 - Quadro sem nós, pan, zoom com mínimo 0.1, zoom in e zoom out, controle de zoom out desabilitado em 0.1 (navegador).
