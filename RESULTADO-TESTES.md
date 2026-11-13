@@ -55,3 +55,4 @@ Aprovado com ressalva: pan e zoom passaram no navegador e no Electron real (por 
 - O Playwright padrão não abriu o Chromium (`/opt/google/chrome/chrome` não encontrado). O navegador foi testado com claude-in-chrome.
 - O Electron foi testado com `_electron` do Playwright, com DISPLAY=:0 e `--no-sandbox` só para o teste.
 - Computer use não está ligado, então o mouse e o teclado reais do usuário ainda não foram usados.
+- **Abertura e fechamento do app:** o Vexely foi aberto pelo `npm run dev` (electron-vite dev, PID 99793 e Electron filho) e pelo teste `tests/electron-pan-zoom.mjs` (que fecha o app ao final, via `app.close()`). Não verifiquei outra instância antes de abrir: a checagem só foi feita depois, e não havia nenhuma instância do usuário aberta. Ao final, fechei o `electron-vite dev` e os processos do Electron deste repositório. A porta 5173 deixou de responder. Não restou nenhum processo do Vexely.
