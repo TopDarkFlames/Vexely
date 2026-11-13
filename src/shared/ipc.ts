@@ -15,8 +15,6 @@ export interface PtySpawnOptions {
   cols: number
   rows: number
   cwd?: string
-  shell?: string
-  args?: string[]
 }
 
 export interface PtyDataEvent {
