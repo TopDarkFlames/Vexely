@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'node:path'
+import { isAbsolute, join, relative } from 'node:path'
+import { realpathSync, statSync } from 'node:fs'
 import os from 'node:os'
 import * as pty from 'node-pty'
 import { IPC, type PtySpawnOptions } from '../shared/ipc'
@@ -10,6 +11,20 @@ const ptys = new Map<string, pty.IPty>()
 function defaultShell(): string {
   if (process.platform === 'win32') return process.env.COMSPEC || 'powershell.exe'
   return process.env.SHELL || '/bin/bash'
+}
+
+// Aceita só um diretório existente dentro da pasta do usuário; qualquer outra coisa cai na pasta pessoal.
+function safeCwd(cwd: unknown): string {
+  const home = os.homedir()
+  if (typeof cwd !== 'string' || !isAbsolute(cwd)) return home
+  try {
+    const real = realpathSync(cwd)
+    if (!statSync(real).isDirectory()) return home
+    const rel = relative(realpathSync(home), real)
+    return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel)) ? real : home
+  } catch {
+    return home
+  }
 }
 
 function createWindow(): void {
@@ -26,11 +41,12 @@ function createWindow(): void {
 
   ipcMain.handle(IPC.ptySpawn, (_e, opts: PtySpawnOptions) => {
     ptys.get(opts.nodeId)?.kill()
-    const p = pty.spawn(opts.shell ?? defaultShell(), opts.args ?? [], {
+    // O renderer não escolhe o shell nem os argumentos: o main decide sozinho.
+    const p = pty.spawn(defaultShell(), [], {
       name: 'xterm-256color',
       cols: opts.cols,
       rows: opts.rows,
-      cwd: opts.cwd ?? os.homedir(),
+      cwd: safeCwd(opts.cwd),
       env: { ...process.env, BOARD_NODE_ID: opts.nodeId } as Record<string, string>
     })
     p.onData((data) => win.webContents.send(IPC.ptyData, { nodeId: opts.nodeId, data }))
