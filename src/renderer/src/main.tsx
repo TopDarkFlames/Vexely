@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
-import '@xterm/xterm/css/xterm.css'
+import '@xyflow/react/dist/style.css'
 import './styles.css'
-import { Terminal } from './Terminal'
+import { Board } from './Board'
 
-createRoot(document.getElementById('root')!).render(<Terminal nodeId="terminal-1" />)
+createRoot(document.getElementById('root')!).render(<Board />)
